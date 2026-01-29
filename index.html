@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/cover.png" type="image/png">
+    <style>
+        :root {
+            --cover-color: #3e2723;
+            --paper-color: #f5f5dc;
+            --wood-texture: #1a1a1a;
+        }
+
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle, #2c2c2c 0%, #000000 100%);
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+            perspective: 1500px;
+        }
+
+        /* 3D Scene */
+        .book-container {
+            position: relative;
+            width: 400px;
+            height: 550px;
+            cursor: pointer;
+            transition: transform 1s;
+            transform-style: preserve-3d;
+        }
+
+        .book-container.open {
+            transform: translateX(100px); /* Move right so open book is centered */
+        }
+
+        /* The Book Structure */
+        .book {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            transform-style: preserve-3d;
+            transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1);
+        }
+
+        .book-container.open .book {
+            transform: rotateY(-180deg);
+        }
+
+        /* Front Cover */
+        .front {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #4e342e 0%, #3e2723 100%);
+            border-radius: 5px 15px 15px 5px;
+            box-shadow: inset 5px 0 10px rgba(0,0,0,0.5), 10px 10px 30px rgba(0,0,0,0.7);
+            transform-origin: left;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backface-visibility: hidden; /* Hides the back of the front cover */
+            border: 2px solid #5d4037;
+        }
+
+        .front::after {
+            content: "TRADING\nJOURNAL";
+            font-family: 'Times New Roman', serif;
+            color: #d4af37; /* Gold leaf effect */
+            font-size: 2.5rem;
+            text-align: center;
+            border: 3px solid #d4af37;
+            padding: 20px;
+            letter-spacing: 3px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+            white-space: pre-wrap;
+        }
+
+        /* The Inside Page (Checklist) */
+        .back-page {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            width: 98%;
+            height: 98%;
+            background: var(--paper-color);
+            border-radius: 2px 10px 10px 2px;
+            box-shadow: inset 10px 0 20px rgba(0,0,0,0.1);
+            z-index: 0;
+            padding: 40px;
+            box-sizing: border-box;
+            background-image: linear-gradient(#e0e0e0 1px, transparent 1px);
+            background-size: 100% 25px;
+        }
+
+        /* Inside of Front Cover (Left side when open) */
+        .front-inside {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: #2d1b18; /* Darker leather */
+            border-radius: 5px 15px 15px 5px;
+            transform: rotateY(180deg); /* Flip it */
+            backface-visibility: hidden;
+            z-index: 1;
+            /* Being on the back of the .book div makes this tricky in pure CSS 
+               without complex nesting, so we attach it to the book container 
+               or handle visibility. For simplicity in this single file, 
+               we will attach it to the rotation logic via JS classes or strict structure. 
+               
+               Actually, a better approach for a simple flip:
+            */
+        }
+        
+        /* Revised Structure for easy flipping */
+        .cover {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform-origin: left;
+            transform-style: preserve-3d;
+            transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1);
+            z-index: 10;
+        }
+        
+        .book-container.open .cover {
+            transform: rotateY(-180deg);
+        }
+
+        .cover-front {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    
+    /* Base Leather Color */
+    background-color: #3e2723; 
+    
+    /* Diamond Stitching Pattern */
+    background-image: 
+        /* Diagonal Line 1 (Shadow + Thread Highlight) */
+        repeating-linear-gradient(60deg, 
+            transparent, 
+            transparent 29px, 
+            rgba(0,0,0,0.5) 30px, 
+            rgba(28 0 0 / 20%) 31px, 
+            transparent 32px),
+        /* Diagonal Line 2 (Cross) */
+        repeating-linear-gradient(300deg, 
+            transparent, 
+            transparent 29px, 
+            rgba(0,0,0,0.5) 30px, 
+            rgba(101 0 0 / 20%) 31px, 
+            transparent 32px);
+            
+    border-radius: 0 10px 10px 0;
+    backface-visibility: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    /* Edges and Depth */
+    border: 2px solid #281815;
+    box-shadow: inset 10px 0 20px rgba(0,0,0,0.5); /* Shadow near spine */
+    z-index: 2;
+}
+
+        .cover-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: #3e2723;
+            border-radius: 10px 0 0 10px;
+            transform: rotateY(180deg);
+            backface-visibility: hidden;
+            box-shadow: inset -10px 0 20px rgba(0,0,0,0.3);
+            position: relative; /* Essential for corner positioning */
+            display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+    border-right: 2px solid #2d1b18; /* Spine crease */
+        }
+
+
+        /* Import handwritten font for realism */
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Cinzel:wght@500&display=swap');
+
+
+.corner-logo {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    width: 67px;  /* Adjust size as needed */
+    height: 66px;
+    opacity: 0.6; /* Makes it look embossed/faded into leather */
+    filter: sepia(100%) hue-rotate(350deg) saturate(150%); /* Gold/Leather tint */
+    mix-blend-mode: overlay; /*-> Optional: try this for a deeper "stamp" effect */
+}
+
+.inspiration-container {
+    border: 1px solid rgba(212, 175, 55, 0.3); /* Faint gold border */
+    padding: 20px;
+    border-radius: 5px;
+}
+
+.quote-title {
+    font-family: 'Cinzel', serif;
+    color: #8d6e63;
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    border-bottom: 1px solid #5d4037;
+    display: inline-block;
+    padding-bottom: 5px;
+}
+
+.quote-text {
+    font-family: 'Dancing Script', cursive; /* Handwritten style */
+    font-size: 1.8rem;
+    color: #e6c278; /* Gold/Cream Ink */
+    margin: 0;
+    line-height: 1.4;
+    text-shadow: 1px 1px 0px rgba(0,0,0,0.5); /* Embossed look */
+    transform: rotate(0deg); /* Ensure text isn't flipped */
+}
+
+        .page {
+    position: absolute;
+    right: 0;
+    width: 98%;
+    height: 98%;
+    top: 1%;
+    
+    /* Paper Base */
+    background-color: #fdfbf7;
+
+    /* Blue Notebook Lines */
+    background-image: repeating-linear-gradient(
+        transparent,
+        transparent 29px,
+        #a4b0be 30px
+    );
+    
+    /* Red Vertical Margin Line */
+    
+    
+    border-radius: 0 8px 8px 0;
+    box-shadow: inset 10px 0 30px rgba(0,0,0,0.05), 2px 2px 5px rgba(0,0,0,0.2);
+    z-index: 1;
+    padding: 30px 15px 30px 15px; /* Extra left padding for margin */
+    box-sizing: border-box;
+    font-family: 'Courier New', monospace;
+    
+    /* Typography Alignment */
+    line-height: 30px; /* Matches line height */
+}
+
+/* Force items to sit on the lines */
+.checklist-item {
+    height: 30px; 
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+        
+        /* Checklist Styling */
+        h2 {
+            text-align: center;
+            text-decoration: underline;
+            margin-top: 0;
+            color: #333;
+            margin: 0 0 30px 0; /* Takes up exactly 2 lines (header + space) */
+    line-height: 30px;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            font-size: 1.1rem;
+            color: #444;
+            cursor: pointer;
+        }
+
+        input[type="checkbox"] {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #333;
+            margin-right: 15px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        input[type="checkbox"]:checked {
+            background: #2e7d32;
+            border-color: #2e7d32;
+        }
+
+        input[type="checkbox"]:checked::after {
+            content: '✔';
+            color: white;
+            position: absolute;
+            top: -2px;
+            left: 3px;
+            font-size: 16px;
+        }
+
+        .status {
+            margin-top: 33px;
+            text-align: center;
+            padding: 10px;
+            border: 2px dashed #ccc;
+            color: #888;
+            font-weight: bold;
+            transition: 0.3s;
+            background: #fdfbf7;
+        }
+
+        .status.ready {
+            border-color: #2e7d32;
+            color: #2e7d32;
+            background: rgba(46, 125, 50, 0.5);
+        }
+
+        .spine {
+            position: absolute;
+            left: -20px;
+            top: 0;
+            width: 40px;
+            height: 100%;
+            background: #2d1b18;
+            border-radius: 5px 0 0 5px;
+            transform: rotateY(-90deg) translateX(-20px); 
+            z-index: 0;
+        }
+        
+        .instruction {
+            position: absolute;
+            bottom: -50px;
+            color: #aaa;
+            font-size: 0.9rem;
+            width: 100%;
+            text-align: center;
+            opacity: 0.7;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="book-container" id="bookContainer">
+        
+        <div class="page">
+            <h2>Pre-Trade Checklist</h2>
+            
+            <div id="dateDisplay" style="font-weight: bold; color: #555; text-align: center;margin-bottom: 30px;"></div>
+            <label class="checklist-item">
+                <input type="checkbox" class="check"> 
+                No High Impact News
+            </label>
+            <label class="checklist-item">
+                <input type="checkbox" class="check"> 
+                Daily Bias Confirmed
+            </label>
+            <label class="checklist-item">
+                <input type="checkbox" class="check"> 
+                Each session lows identified
+            </label>
+            <label class="checklist-item">
+                <input type="checkbox" class="check"> 
+                Possible liquidity sweep areas 
+            </label>
+            <label class="checklist-item">
+                <input type="checkbox" class="check"> 
+                Break of structure
+            </label>
+            <label class="checklist-item">
+                <input type="checkbox" class="check"> 
+                Risk/Reward > 1:2
+            </label>
+            
+            <label class="checklist-item">
+                <input type="checkbox" class="check"> 
+                Mental State: Calm
+            </label>
+
+            <div class="status" id="statusBox">PENDING</div>
+        </div>
+
+        <div class="cover">
+            <div class="cover-front">
+                <div style="font-family: 'Times New Roman', serif; color: #d4af37; font-size: 2rem; text-align: center; border: 3px solid #d4af37; padding: 20px; letter-spacing: 3px; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); background: #3e2723;">
+                    TRADING<br>CHECKLIST
+                </div>
+            </div>
+            <div class="cover-back">
+    <div class="inspiration-container">
+    <div class="quote-title">Daily Reminder</div>
+    <p class="quote-text">
+        "Don't forget why<br>you started,
+        <span style="font-size: 0.8em;">and who you are doing it for."</span>
+    </p>
+</div>
+
+    <img src="/ik16.png" alt="Logo" class="corner-logo">
+</div>
+        </div>
+        
+        <div class="instruction">Click the book to open/close</div>
+    </div>
+
+    <script>
+        const container = document.getElementById('bookContainer');
+        const checkboxes = document.querySelectorAll('.check');
+        const statusBox = document.getElementById('statusBox');
+
+        // Toggle Book Open/Close
+        container.addEventListener('click', (e) => {
+            // Prevent closing if clicking directly on a checkbox
+            if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'LABEL') {
+                container.classList.toggle('open');
+            }
+        });
+
+        // Checklist Logic
+        checkboxes.forEach(box => {
+            box.addEventListener('change', checkStatus);
+        });
+
+        function checkStatus() {
+            const allChecked = Array.from(checkboxes).every(box => box.checked);
+            
+            if (allChecked) {
+                statusBox.textContent = "EXECUTION AUTHORIZED";
+                statusBox.classList.add('ready');
+            } else {
+                statusBox.textContent = "PENDING";
+                statusBox.classList.remove('ready');
+            }
+        }
+
+
+
+        function setSofiaDate() {
+    const dateDisplay = document.getElementById('dateDisplay');
+    
+    // Create date formatter for Bulgaria
+    const options = { 
+        timeZone: 'Europe/Sofia', 
+        weekday: 'short', 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+    };
+    
+    const sofiaTime = new Date().toLocaleDateString('en-GB', options);
+    dateDisplay.textContent = sofiaTime;
+}
+
+setSofiaDate();
+    </script>
+</body>
+</html>
