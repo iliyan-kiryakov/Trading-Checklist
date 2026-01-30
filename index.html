@@ -180,7 +180,6 @@
             position: relative; /* Essential for corner positioning */
             display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
     padding: 20px;
     box-sizing: border-box;
@@ -194,9 +193,9 @@
 
 .corner-logo {
     position: absolute;
-    bottom: 15px;
-    right: 15px;
-    width: 67px;  /* Adjust size as needed */
+    top: 25px;
+    right: 23px;
+    width: 70px;  /* Adjust size as needed */
     height: 66px;
     opacity: 0.6; /* Makes it look embossed/faded into leather */
     filter: sepia(100%) hue-rotate(350deg) saturate(150%); /* Gold/Leather tint */
@@ -351,6 +350,75 @@
             opacity: 0.7;
         }
 
+/* Calculator Styles */
+.calc-container {
+    width: 85%;
+    color: #d4af37;
+    font-family: 'Cinzel', serif;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.calc-title {
+    font-size: 1.2rem;
+    border-bottom: 2px solid #5d4037;
+    margin-bottom: 15px;
+    padding-bottom: 5px;
+    letter-spacing: 2px;
+}
+
+.input-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.input-group label {
+    font-size: 0.8rem;
+    color: #a1887f; /* Lighter leather color */
+}
+
+.calc-input {
+    width: 80px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #8d6e63;
+    color: #fff;
+    font-family: 'Courier New', monospace;
+    text-align: right;
+    font-size: 1rem;
+    padding: 2px;
+}
+
+.calc-input:focus {
+    outline: none;
+    border-bottom: 1px solid #d4af37;
+}
+
+/* Remove arrows from number inputs */
+.calc-input::-webkit-outer-spin-button,
+.calc-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.result-box {
+    margin-top: 15px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid #5d4037;
+    border-radius: 4px;
+}
+
+.lot-result {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #2e7d32; /* Green for go */
+    text-shadow: 0 0 5px rgba(46, 125, 50, 0.4);
+    display: block;
+}
+
     </style>
 </head>
 <body>
@@ -385,10 +453,7 @@
                 <input type="checkbox" class="check"> 
                 Risk/Reward > 1:2
             </label>
-            <label class="checklist-item">
-                <input type="checkbox" class="check"> 
-                Did not force into a trade
-            </label>
+            
             <label class="checklist-item">
                 <input type="checkbox" class="check"> 
                 Mental State: Calm
@@ -404,14 +469,38 @@
                 </div>
             </div>
             <div class="cover-back">
-    <div class="inspiration-container">
+                <div class="inspiration-container">
     <div class="quote-title">Daily Reminder</div>
     <p class="quote-text">
         "Don't forget why<br>you started,
         <span style="font-size: 0.8em;">and who you are doing it for."</span>
     </p>
 </div>
+    <div class="calc-container">
+        <div class="calc-title">Risk Calculator</div>
+        
+        <div class="input-group">
+            <label>Balance ($)</label>
+            <input type="number" class="calc-input" id="c_balance" placeholder="10000">
+        </div>
 
+        <div class="input-group">
+            <label>Risk (%)</label>
+            <input type="number" class="calc-input" id="c_risk" placeholder="1.0" value="1.0">
+        </div>
+
+        <div class="input-group">
+            <label>Stop Loss (Pips)</label>
+            <input type="number" class="calc-input" id="c_sl" placeholder="10">
+        </div>
+
+        <div class="result-box">
+            <span style="font-size: 0.7rem; color: #a1887f;">LOT SIZE:</span>
+            <span class="lot-result" id="c_result">0.00</span>
+        </div>
+    </div>
+
+    
     <img src="docs/assets/img/ik16.png" alt="Logo" class="corner-logo">
 </div>
         </div>
@@ -419,6 +508,12 @@
         <div class="instruction">Click the book to open/close</div>
     </div>
 
+<!-- Inspiration Quote on Back Cover 
+    
+-->
+
+    <img src="/ik16.png" alt="Logo" class="corner-logo">
+    
     <script>
         const container = document.getElementById('bookContainer');
         const checkboxes = document.querySelectorAll('.check');
@@ -441,7 +536,7 @@
             const allChecked = Array.from(checkboxes).every(box => box.checked);
             
             if (allChecked) {
-                statusBox.textContent = "TRADE EXECUTION AUTHORIZED!";
+                statusBox.textContent = "EXECUTION AUTHORIZED";
                 statusBox.classList.add('ready');
             } else {
                 statusBox.textContent = "PENDING";
@@ -468,12 +563,43 @@
 }
 
 setSofiaDate();
+
+
+
+// --- Calculator Logic ---
+const cInputs = [
+    document.getElementById('c_balance'),
+    document.getElementById('c_risk'),
+    document.getElementById('c_sl')
+];
+const cResult = document.getElementById('c_result');
+
+function calculateLots() {
+    const balance = parseFloat(document.getElementById('c_balance').value) || 0;
+    const riskPercent = parseFloat(document.getElementById('c_risk').value) || 0;
+    const stopLoss = parseFloat(document.getElementById('c_sl').value) || 0;
+
+    if (balance > 0 && riskPercent > 0 && stopLoss > 0) {
+        // Formula: (Balance * Risk%) / (StopLoss * PipValue)
+        // Assuming Standard Account (1 pip = $10 per lot)
+        const riskAmount = balance * (riskPercent / 100);
+        const standardLotPipValue = 10; 
+        
+        let lots = riskAmount / (stopLoss * standardLotPipValue);
+        
+        // Round to 2 decimal places (standard forex lot size)
+        lots = Math.round(lots * 100) / 100;
+        
+        cResult.textContent = lots.toFixed(2);
+    } else {
+        cResult.textContent = "0.00";
+    }
+}
+
+// Attach listeners to all inputs
+cInputs.forEach(input => {
+    input.addEventListener('input', calculateLots);
+});
     </script>
 </body>
-
 </html>
-
-
-
-
-
